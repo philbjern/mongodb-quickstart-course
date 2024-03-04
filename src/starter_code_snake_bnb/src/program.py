@@ -1,10 +1,12 @@
 from colorama import Fore
+
 import program_guests
 import program_hosts
+from data import mongo_setup
 
 
 def main():
-    # TODO: Setup mongoengine global values
+    mongo_setup.global_init()
 
     print_header()
 

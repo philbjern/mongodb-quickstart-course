@@ -2,6 +2,8 @@ from colorama import Fore
 from infrastructure.switchlang import switch
 import infrastructure.state as state
 
+import services.data_service as svc
+
 
 def run():
     print(' ****************** Welcome host **************** ')
@@ -48,30 +50,53 @@ def show_commands():
 
 def create_account():
     print(' ****************** REGISTER **************** ')
-    # TODO: Get name & email
-    # TODO: Create account, set as logged in.
 
-    print(" -------- NOT IMPLEMENTED -------- ")
+    name = input('What is your name? ')
+    email = input('What is your email? ')
+
+    old_account = svc.find_account_by_email(email)
+    if old_account:
+        error_msg(f"ERRROR: Account with email {email} already exists.")
+        return
+
+    state.active_account = svc.create_account(name, email)
+    success_msg(f"Created new account with id {state.active_account.id}.")
 
 
 def log_into_account():
     print(' ****************** LOGIN **************** ')
 
-    # TODO: Get email
-    # TODO: Find account in DB, set as logged in.
+    email = input('What is your email? ').strip().lower()
+    account = svc.find_account_by_email(email)
 
-    print(" -------- NOT IMPLEMENTED -------- ")
+    if not account:
+        error_msg(f'Could not find account with email {email}.')
+        return
 
+    state.active_account = account
+    success_msg('Logged in successfully. ')
 
 def register_cage():
     print(' ****************** REGISTER CAGE **************** ')
 
-    # TODO: Require an account
-    # TODO: Get info about cage
-    # TODO: Save cage to DB.
+    if not state.active_account:
+        error_msg('You must login first too register a cage.')
+        return
 
-    print(" -------- NOT IMPLEMENTED -------- ")
+    meters = input('How many square meters is the cage? ')
+    if not meters:
+        error_msg('Cancelled')
+        return
 
+    meters = float(meters)
+    carpeted = input('Is it carpeted [y, n]? ').lower().startswith('y')
+    has_toys = input('Have snake toys [y, n]? ').lower().startswith('y')
+    allow_dangerous = input('Can you host venomous snakes [y, n]? ').lower().startswith('y')
+    name = input('Give your cage a name: ')
+
+    svc.register_cage(
+        state.active_account, name, allow_dangerous, has_toys, carpeted, meters
+    )
 
 def list_cages(supress_header=False):
     if not supress_header:
