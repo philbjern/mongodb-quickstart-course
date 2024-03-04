@@ -3,7 +3,7 @@ import program_hosts as hosts
 import infrastructure.state as state
 
 
-def run():
+ def run():
     print(' ****************** Welcome guest **************** ')
     print()
 

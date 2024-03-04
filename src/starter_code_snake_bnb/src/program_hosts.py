@@ -1,6 +1,7 @@
 from colorama import Fore
 from infrastructure.switchlang import switch
 import infrastructure.state as state
+import dateutil.parser as parser
 
 import services.data_service as svc
 
@@ -93,31 +94,70 @@ def register_cage():
     has_toys = input('Have snake toys [y, n]? ').lower().startswith('y')
     allow_dangerous = input('Can you host venomous snakes [y, n]? ').lower().startswith('y')
     name = input('Give your cage a name: ')
+    price = input('How much are you charging? ')
 
-    svc.register_cage(
-        state.active_account, name, allow_dangerous, has_toys, carpeted, meters
+    cage = svc.register_cage(
+        state.active_account, name, allow_dangerous, has_toys, carpeted, meters, float(price)
     )
 
-def list_cages(supress_header=False):
-    if not supress_header:
+    state.reload_account()
+    success_msg(f'Register new cage with id {cage.id}.')
+
+
+def list_cages(suppress_header=False):
+    if not suppress_header:
         print(' ******************     Your cages     **************** ')
 
-    # TODO: Require an account
-    # TODO: Get cages, list details
+    if not state.active_account:
+        error_msg('You must login first to register a cage.')
+        return
 
-    print(" -------- NOT IMPLEMENTED -------- ")
+    cages = svc.find_cages_for_user(state.active_account)
+    print(f'You have {len(cages)} cages.')
+    for idx, c in enumerate(cages):
+        print(f' {idx+1}. {c.name} is {c.square_meters} meters.')
+        for b in c.bookings:
+            print('      * Booking {}, {} days, booked? {}'.format(
+                b.check_in_date,
+                (b.check_out_date - b.check_in_date).days,
+                'YES' if b.booked_date is not None else 'no'
+            ))
 
 
 def update_availability():
     print(' ****************** Add available date **************** ')
 
-    # TODO: Require an account
-    # TODO: list cages
-    # TODO: Choose cage
-    # TODO: Set dates, save to DB.
+    if not state.active_account:
+        error_msg('You must log in first to register a cage.')
+        return
 
-    print(" -------- NOT IMPLEMENTED -------- ")
+    list_cages(suppress_header=True)
 
+    cage_number = input('Enter cage number: ')
+    if not cage_number.strip():
+        error_msg('Cancelled')
+        print()
+        return
+
+    cage_number = int(cage_number)
+
+    cages = svc.find_cages_for_user(state.active_account)
+    selected_cage = cages[cage_number-1]
+
+    success_msg(f'Selected cage {selected_cage.name}')
+
+    start_date = parser.parse(
+        input('Enter available date [yyyy-mm-dd]:  ')
+    )
+    days = int(input('How many days is this block of time? '))
+
+    svc.add_available_date(
+        selected_cage,
+        start_date,
+        days
+    )
+
+    success_msg(f'Date added to cage {selected_cage.name}')
 
 def view_bookings():
     print(' ****************** Your bookings **************** ')
