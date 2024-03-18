@@ -77,6 +77,7 @@ def log_into_account():
     state.active_account = account
     success_msg('Logged in successfully. ')
 
+
 def register_cage():
     print(' ****************** REGISTER CAGE **************** ')
 
